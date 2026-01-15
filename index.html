@@ -1,11 +1,10 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Messages</title>
+<title>MPESA</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { 
@@ -50,30 +49,37 @@ body {
 }
 .message-bubble {
   max-width: 90%;
-  margin-bottom: 20px;
-  padding: 14px 16px 12px 16px; /* Reduced top padding */
-  border-radius: 20px;
-  font-size: 16px;
-  line-height: 1.45;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 15px;
+  line-height: 1.4;
   white-space: pre-wrap;
   word-wrap: break-word;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.4);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
   letter-spacing: -0.01em;
   animation: slideInDown 0.4s ease-out;
   background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-bottom-left-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-bottom-left-radius: 5px;
+  display: inline-block;
+  width: fit-content;
+}
+.message-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 .message-text {
-  margin-bottom: 4px; /* Tight spacing before time */
+  margin: 0;
 }
 .message-time {
-  font-size: 12px;
+  font-size: 11px;
   opacity: 0.7;
-  margin-top: 0; /* Removed top margin */
   font-weight: 400;
-  text-align: right;
+  align-self: flex-start;
+  order: 2;
 }
 .empty-state {
   text-align: center;
@@ -124,9 +130,15 @@ body {
 <script>
 const API = "https://mpesa-1-mc8e.onrender.com";
 
-function formatTime(dateStr) {
-  const date = new Date(dateStr);
-  return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+function extractTimeFromMessage(message) {
+  // Extract time from M-Pesa message format: "15/1/26 at 11:43 PM"
+  const timeMatch = message.match(/at (\d{1,2}:\d{2} (?:AM|PM))/i);
+  if (timeMatch) {
+    return timeMatch[1];
+  }
+  // Fallback to current time format
+  const now = new Date();
+  return now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 }
 
 async function loadMessages() {
@@ -150,11 +162,15 @@ async function loadMessages() {
     container.innerHTML = "";
     
     data.forEach((tx, index) => {
+      const messageTime = extractTimeFromMessage(tx.message);
+      
       const div = document.createElement("div");
       div.className = `message-bubble`;
       div.innerHTML = `
-        <div class="message-text">${tx.message}</div>
-        <div class="message-time">${formatTime(tx.createdAt || new Date().toISOString())}</div>
+        <div class="message-content">
+          <div class="message-text">${tx.message}</div>
+          <div class="message-time">${messageTime}</div>
+        </div>
       `;
       
       div.style.animationDelay = `${index * 0.1}s`;
